@@ -12,10 +12,18 @@ extern "C" int64_t tim_chksum_r8_1d(double* field, size_t field_size, double* ma
     //   auto checksum = std::bit_cast<int64_t>(var);
     // See https://en.wikipedia.org/wiki/Fast_inverse_square_root#Overview_of_the_code
     // for logic behind casting.
-    amrex::Long checksum = amrex::Reduce::Sum<amrex::Long>(field_size, 
-        [=] AMREX_GPU_DEVICE (int i) -> amrex::Long {
-            return * ( amrex::Long * ) &field[i];
-        });
+    // Also need C++20 to use std::view::filter for mask.
+    amrex::Long checksum = 0;
+    if(mask_val)
+        checksum = amrex::Reduce::Sum<amrex::Long>(field_size, 
+            [=] AMREX_GPU_DEVICE (int i) -> amrex::Long {
+                return (field[i] == (*mask_val)) ? 0 : (* ( amrex::Long * ) &field[i]);
+            });
+    else
+        checksum = amrex::Reduce::Sum<amrex::Long>(field_size, 
+            [=] AMREX_GPU_DEVICE (int i) -> amrex::Long {
+                return * ( amrex::Long * ) &field[i];
+            });
     amrex::ParallelDescriptor::ReduceLongSum(checksum);
     return checksum;
 }
