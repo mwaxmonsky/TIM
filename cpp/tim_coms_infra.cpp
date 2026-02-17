@@ -33,7 +33,7 @@ int64_t checksum(double* field, size_t field_size, double* mask_val)
     return checksum;
 }
 
-}
+} // namespace TIM
 
 int64_t c_tim_chksum_r8_1d(double* field, size_t field_size, double* mask_val) {
     return TIM::checksum(field, field_size, mask_val);
