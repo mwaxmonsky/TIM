@@ -1,4 +1,4 @@
-module tim_coms_infra_f
+module tim_coms_infra_interface
 
 use iso_fortran_env, only : int32, int64
 use iso_c_binding,   only : c_int64_t, c_double, c_size_t, c_ptr, c_null_ptr, c_loc
@@ -113,5 +113,5 @@ function tim_chksum_real_4d(field, pelist, mask_val) result(chksum)
   chksum = c_tim_chksum(field_loc, int(size(field), kind=c_size_t), mask_loc)
 end function tim_chksum_real_4d
 
-end module tim_coms_infra_f
+end module tim_coms_infra_interface
 

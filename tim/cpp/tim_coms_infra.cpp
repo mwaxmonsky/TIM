@@ -1,12 +1,9 @@
-#include <iostream>
-#include <cstdint>
 // #include <bit>
 
 #include <AMReX_Gpu.H>
 #include <AMReX_ParallelDescriptor.H>
 #include <AMReX_Reduce.H>
 
-#include "tim_coms_infra_C_API.h"
 #include "tim_coms_infra.hpp"
 
 namespace TIM {
@@ -34,7 +31,3 @@ int64_t checksum(double* field, size_t field_size, double* mask_val)
 }
 
 } // namespace TIM
-
-int64_t c_tim_chksum_r8_1d(double* field, size_t field_size, double* mask_val) {
-    return TIM::checksum(field, field_size, mask_val);
-}
