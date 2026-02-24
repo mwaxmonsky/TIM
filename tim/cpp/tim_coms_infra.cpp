@@ -17,10 +17,14 @@ int64_t checksum(double* field, size_t field_size, double* mask_val)
     // Also need C++20 to use std::view::filter for mask.
     amrex::Long checksum = 0;
     if(mask_val)
-        checksum = amrex::Reduce::Sum<amrex::Long>(field_size, 
+    {
+        amrex::Long mask_bytes = * ( amrex::Long * ) mask_val;
+        checksum = amrex::Reduce::Sum<amrex::Long>(field_size,
             [=] AMREX_GPU_DEVICE (size_t i) -> amrex::Long {
-                return (field[i] == (*mask_val)) ? 0 : (* ( amrex::Long * ) &field[i]);
+                amrex::Long field_checksum = * ( amrex::Long * ) &field[i];
+                return (field_checksum == mask_bytes) ? 0 : field_checksum;
             });
+    }
     else
         checksum = amrex::Reduce::Sum<amrex::Long>(field_size, 
             [=] AMREX_GPU_DEVICE (size_t i) -> amrex::Long {
