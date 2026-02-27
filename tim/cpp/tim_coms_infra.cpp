@@ -26,7 +26,7 @@ int64_t checksum(double* field, size_t field_size, double* mask_val)
             });
     }
     else
-        checksum = amrex::Reduce::Sum<amrex::Long>(field_size, 
+        checksum = amrex::Reduce::Sum<amrex::Long>(field_size,
             [=] AMREX_GPU_DEVICE (size_t i) -> amrex::Long {
                 return * ( amrex::Long * ) &field[i];
             });
