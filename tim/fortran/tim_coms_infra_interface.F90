@@ -9,13 +9,13 @@ private
 public :: tim_chksum
 
 interface c_tim_chksum
-  function c_tim_chksum_r8_1d(field_ptr, field_size, mask_ptr) bind(c, name="c_tim_chksum_r8_1d")
+  function c_tim_chksum(field_ptr, field_size, mask_ptr) bind(c, name="c_tim_chksum")
     import c_ptr, c_int64_t, c_size_t
-    integer(c_int64_t)                        :: c_tim_chksum_r8_1d
+    integer(c_int64_t)                        :: c_tim_chksum
     type(c_ptr),            value, intent(in) :: field_ptr
     integer(c_size_t),      value, intent(in) :: field_size
     type(c_ptr),            value, intent(in) :: mask_ptr
-  end function c_tim_chksum_r8_1d
+  end function c_tim_chksum
 end interface c_tim_chksum
 
 interface tim_chksum
