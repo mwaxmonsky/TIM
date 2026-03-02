@@ -8,15 +8,15 @@ private
 
 public :: tim_chksum
 
-interface c_tim_chksum
-  function c_tim_chksum(field_ptr, field_size, mask_ptr) bind(c, name="c_tim_chksum")
+interface tim_chksum_c
+  function tim_chksum_c(field_ptr, field_size, mask_ptr) bind(c, name="tim_chksum_c")
     import c_ptr, c_int64_t, c_size_t
-    integer(c_int64_t)                        :: c_tim_chksum
+    integer(c_int64_t)                        :: tim_chksum_c
     type(c_ptr),            value, intent(in) :: field_ptr
     integer(c_size_t),      value, intent(in) :: field_size
     type(c_ptr),            value, intent(in) :: mask_ptr
-  end function c_tim_chksum
-end interface c_tim_chksum
+  end function tim_chksum_c
+end interface tim_chksum_c
 
 interface tim_chksum
   module procedure tim_chksum_real_0d
@@ -42,7 +42,7 @@ function tim_chksum_real_0d(field, pelist, mask_val) result(chksum)
     mask_loc = c_null_ptr
   end if
 
-  chksum = c_tim_chksum(field_loc, int(1, kind=c_size_t), mask_loc)
+  chksum = tim_chksum_c(field_loc, int(1, kind=c_size_t), mask_loc)
 end function tim_chksum_real_0d
 
 function tim_chksum_real_1d(field, pelist, mask_val) result(chksum)
@@ -59,7 +59,7 @@ function tim_chksum_real_1d(field, pelist, mask_val) result(chksum)
     mask_loc = c_null_ptr
   end if
 
-  chksum = c_tim_chksum(field_loc, int(size(field), kind=c_size_t), mask_loc)
+  chksum = tim_chksum_c(field_loc, int(size(field), kind=c_size_t), mask_loc)
 end function tim_chksum_real_1d
 
 function tim_chksum_real_2d(field, pelist, mask_val) result(chksum)
@@ -76,7 +76,7 @@ function tim_chksum_real_2d(field, pelist, mask_val) result(chksum)
     mask_loc = c_null_ptr
   end if
 
-  chksum = c_tim_chksum(field_loc, int(size(field), kind=c_size_t), mask_loc)
+  chksum = tim_chksum_c(field_loc, int(size(field), kind=c_size_t), mask_loc)
 end function tim_chksum_real_2d
 
 function tim_chksum_real_3d(field, pelist, mask_val) result(chksum)
@@ -93,7 +93,7 @@ function tim_chksum_real_3d(field, pelist, mask_val) result(chksum)
     mask_loc = c_null_ptr
   end if
 
-  chksum = c_tim_chksum(field_loc, int(size(field), kind=c_size_t), mask_loc)
+  chksum = tim_chksum_c(field_loc, int(size(field), kind=c_size_t), mask_loc)
 end function tim_chksum_real_3d
 
 function tim_chksum_real_4d(field, pelist, mask_val) result(chksum)
@@ -110,7 +110,7 @@ function tim_chksum_real_4d(field, pelist, mask_val) result(chksum)
     mask_loc = c_null_ptr
   end if
 
-  chksum = c_tim_chksum(field_loc, int(size(field), kind=c_size_t), mask_loc)
+  chksum = tim_chksum_c(field_loc, int(size(field), kind=c_size_t), mask_loc)
 end function tim_chksum_real_4d
 
 end module tim_coms_infra_interface
