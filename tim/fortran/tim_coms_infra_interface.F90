@@ -29,11 +29,11 @@ end interface tim_chksum
 contains
 
 function tim_chksum_real_0d(field, pelist, mask_val) result(chksum)
-  real,              target, intent(in) :: field      !< Input scalar
-  integer, optional,         intent(in) :: pelist(:)  !< PE list of ranks to checksum
-  real,    optional, target, intent(in) :: mask_val   !< FMS mask value
-  type(c_ptr)                           :: field_loc, mask_loc
-  integer(kind=int64)                   :: chksum     !< checksum of array
+  real,              target, intent(in) :: field               !< Input scalar
+  integer, optional,         intent(in) :: pelist(:)           !< PE list of ranks to checksum
+  real,    optional, target, intent(in) :: mask_val            !< FMS mask value
+  type(c_ptr)                           :: field_loc, mask_loc !< c pointers to field and mask
+  integer(kind=int64)                   :: chksum              !< checksum of array
 
   field_loc = c_loc(field)
   if(present(mask_val)) then
@@ -46,11 +46,11 @@ function tim_chksum_real_0d(field, pelist, mask_val) result(chksum)
 end function tim_chksum_real_0d
 
 function tim_chksum_real_1d(field, pelist, mask_val) result(chksum)
-  real, dimension(:), target, intent(in) :: field     !< Input array
-  integer,  optional,         intent(in) :: pelist(:) !< PE list of ranks to checksum
-  real,     optional, target, intent(in) :: mask_val  !< FMS mask value
-  type(c_ptr)                            :: field_loc, mask_loc
-  integer(kind=int64)                    :: chksum               !< checksum of array
+  real, dimension(:), target, intent(in) :: field               !< Input array
+  integer,  optional,         intent(in) :: pelist(:)           !< PE list of ranks to checksum
+  real,     optional, target, intent(in) :: mask_val            !< FMS mask value
+  type(c_ptr)                            :: field_loc, mask_loc !< c pointers to field and mask
+  integer(kind=int64)                    :: chksum              !< checksum of array
 
   field_loc = c_loc(field(1))
   if(present(mask_val)) then
@@ -63,11 +63,11 @@ function tim_chksum_real_1d(field, pelist, mask_val) result(chksum)
 end function tim_chksum_real_1d
 
 function tim_chksum_real_2d(field, pelist, mask_val) result(chksum)
-  real, dimension(:,:), target, intent(in) :: field     !< Unrotated input field
-  integer,    optional,         intent(in) :: pelist(:) !< PE list of ranks to checksum
-  real,       optional, target, intent(in) :: mask_val  !< FMS mask value
-  type(c_ptr)                              :: field_loc, mask_loc
-  integer(kind=int64)                      :: chksum    !< checksum of array
+  real, dimension(:,:), target, intent(in) :: field               !< Unrotated input field
+  integer,    optional,         intent(in) :: pelist(:)           !< PE list of ranks to checksum
+  real,       optional, target, intent(in) :: mask_val            !< FMS mask value
+  type(c_ptr)                              :: field_loc, mask_loc !< c pointers to field and mask
+  integer(kind=int64)                      :: chksum              !< checksum of array
 
   field_loc = c_loc(field(1,1))
   if(present(mask_val)) then
@@ -80,11 +80,11 @@ function tim_chksum_real_2d(field, pelist, mask_val) result(chksum)
 end function tim_chksum_real_2d
 
 function tim_chksum_real_3d(field, pelist, mask_val) result(chksum)
-  real, dimension(:,:,:), target, intent(in) :: field     !< Unrotated input field
-  integer,      optional,         intent(in) :: pelist(:) !< PE list of ranks to checksum
-  real,         optional, target, intent(in) :: mask_val  !< FMS mask value
-  type(c_ptr)                                :: field_loc, mask_loc
-  integer(kind=int64)                        :: chksum    !< checksum of array
+  real, dimension(:,:,:), target, intent(in) :: field               !< Unrotated input field
+  integer,      optional,         intent(in) :: pelist(:)           !< PE list of ranks to checksum
+  real,         optional, target, intent(in) :: mask_val            !< FMS mask value
+  type(c_ptr)                                :: field_loc, mask_loc !< c pointers to field and mask
+  integer(kind=int64)                        :: chksum              !< checksum of array
 
   field_loc = c_loc(field(1,1,1))
   if(present(mask_val)) then
@@ -97,11 +97,11 @@ function tim_chksum_real_3d(field, pelist, mask_val) result(chksum)
 end function tim_chksum_real_3d
 
 function tim_chksum_real_4d(field, pelist, mask_val) result(chksum)
-  real, dimension(:,:,:,:), target, intent(in) :: field     !< Unrotated input field
-  integer,        optional,         intent(in) :: pelist(:) !< PE list of ranks to checksum
-  real,           optional, target, intent(in) :: mask_val  !< FMS mask value
-  type(c_ptr)                                  :: field_loc, mask_loc
-  integer(kind=int64)                          :: chksum    !< checksum of array
+  real, dimension(:,:,:,:), target, intent(in) :: field               !< Unrotated input field
+  integer,        optional,         intent(in) :: pelist(:)           !< PE list of ranks to checksum
+  real,           optional, target, intent(in) :: mask_val            !< FMS mask value
+  type(c_ptr)                                  :: field_loc, mask_loc !< c pointers to field and mask
+  integer(kind=int64)                          :: chksum              !< checksum of array
 
   field_loc = c_loc(field(1,1,1,1))
   if(present(mask_val)) then
