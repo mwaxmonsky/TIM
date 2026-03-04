@@ -15,35 +15,33 @@ amrex::Long checksum(amrex::Box const& bx, amrex::Array4<amrex::Real> const& arr
     // See https://en.wikipedia.org/wiki/Fast_inverse_square_root#Overview_of_the_code
     // for logic behind casting.
     // Also need C++20 to use std::view::filter for mask.
-    amrex::ReduceOps<amrex::ReduceOpSum> reduce_ops;
-    amrex::ReduceData<amrex::Long> reduce_data(reduce_ops);
-    using ReduceTuple = typename decltype(reduce_data)::Type;
+    amrex::Reducer<amrex::ReduceOpSum, amrex::Long> reducer;
+    using Result_t = typename decltype(reducer)::Result_t;
 
-    reduce_ops.eval(bx, reduce_data,
-        [=] AMREX_GPU_DEVICE (int i, int j, int k) -> ReduceTuple
+    reducer.eval(bx,
+        [=] AMREX_GPU_DEVICE (int i, int j, int k) -> Result_t
         {
             return { * ( amrex::Long * ) &arr(i, j, k) };
         });
-    amrex::Long checksum = amrex::get<0>(reduce_data.value());
+    amrex::Long checksum = amrex::get<0>(reducer.getResult());
     amrex::ParallelDescriptor::ReduceLongSum(checksum);
     return checksum;
 }
 
 amrex::Long checksum(amrex::Box const& bx, amrex::Array4<amrex::Real> const& arr, amrex::Real mask)
 {
-    amrex::ReduceOps<amrex::ReduceOpSum> reduce_ops;
-    amrex::ReduceData<amrex::Long> reduce_data(reduce_ops);
-    using ReduceTuple = typename decltype(reduce_data)::Type;
+    amrex::Reducer<amrex::ReduceOpSum, amrex::Long> reducer;
+    using Result_t = typename decltype(reducer)::Result_t;
 
     amrex::Long mask_bytes = * ( amrex::Long * ) &mask;
 
-    reduce_ops.eval(bx, reduce_data,
-        [=] AMREX_GPU_DEVICE (int i, int j, int k) -> ReduceTuple
+    reducer.eval(bx,
+        [=] AMREX_GPU_DEVICE (int i, int j, int k) -> Result_t
         {
             amrex::Long field_checksum = * ( amrex::Long * ) &arr(i, j, k);
-            return (field_checksum == mask_bytes) ? 0 : field_checksum;
+            return { (field_checksum == mask_bytes) ? 0 : field_checksum };
         });
-    amrex::Long checksum = amrex::get<0>(reduce_data.value());
+    amrex::Long checksum = amrex::get<0>(reducer.getResult());
     amrex::ParallelDescriptor::ReduceLongSum(checksum);
     return checksum;
 }
