@@ -25,13 +25,16 @@ cmake_minimum_required(VERSION 3.12 FATAL_ERROR)
 set(CMAKE_Fortran_FLAGS_DEBUG)
 
 # Define the CMake project
-project(FMS
+project(TIM
   VERSION 2023.01.0
-  DESCRIPTION  "GFDL FMS Library"
-  HOMEPAGE_URL "https://www.gfdl.noaa.gov/fms"
-  LANGUAGES C Fortran)
+  DESCRIPTION  "TURBO Infrastructure for MOM (TIM) is an AMReX alternative to the TURBO project. It aims to provide the infrastructure that FMS2 did."
+  LANGUAGES C CXX Fortran)
 
 include(GNUInstallDirs)
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 if(NOT CMAKE_BUILD_TYPE MATCHES "^(Debug|Release|RelWithDebInfo|MinSizeRel)$")
   message(STATUS "Setting build type to 'Release' as none was specified.")
@@ -55,9 +58,9 @@ endif()
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 # Build options
-option(OPENMP "Build FMS with OpenMP support"        OFF)
-option(32BIT  "Build 32-bit (r4) FMS library"         ON)
-option(64BIT  "Build 64-bit (r8) FMS library"        OFF)
+option(OPENMP "Build TIM with OpenMP support"        OFF)
+option(32BIT  "Build 32-bit (r4) TIM library"         ON)
+option(64BIT  "Build 64-bit (r8) TIM library"        OFF)
 option(FPIC   "Build with position independent code" OFF)
 
 # Options for compiler definitions
@@ -81,6 +84,7 @@ endif()
 # Find dependencies
 find_package(MPI REQUIRED COMPONENTS C Fortran)
 find_package(NetCDF REQUIRED COMPONENTS C Fortran)
+find_package(AMReX REQUIRED)
 
 # Check for the OpenMP library and set the required compile flags
 if (OPENMP)
@@ -148,6 +152,7 @@ list(APPEND fms_fortran_src_files
   time_manager/get_cal_time.F90
   time_manager/time_manager.F90
   libFMS.F90
+  tim/fortran/tim_coms_infra_interface.F90
 )
 
 # Collect FMS C source files
@@ -224,9 +229,19 @@ endif()
 # Obtain compiler-specific flags
 include(fms_compiler_flags)
 
+# TIM C++ infrastructure layer
+add_library(tim STATIC
+    tim/cpp/tim_coms_infra.cpp
+    tim/cpp/tim_coms_infra_C_API.cpp
+)
+target_include_directories(tim PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/tim/cpp>
+)
+target_link_libraries(tim PUBLIC AMReX::amrex_3d MPI::MPI_CXX)
+
 foreach(kind ${kinds})
 
-  set(libTgt fms_${kind})
+  set(libTgt tim_${kind})
   set(includeDir "include_${kind}")
   set(moduleDir "${CMAKE_CURRENT_BINARY_DIR}/${includeDir}")
 
@@ -305,7 +320,7 @@ foreach(kind ${kinds})
     target_link_libraries(${libTgt} PRIVATE OpenMP::OpenMP_Fortran)
   endif()
 
-  add_library(FMS::${libTgt} ALIAS ${libTgt})
+  add_library(TIM::${libTgt} ALIAS ${libTgt})
 
   list(APPEND LIB_TARGETS ${libTgt})
   install(DIRECTORY ${moduleDir}    DESTINATION ${CMAKE_INSTALL_PREFIX})
@@ -313,35 +328,34 @@ foreach(kind ${kinds})
 
 endforeach()
 
+# Link TIM C++ layer into tim_r8 so consumers get the tim_chksum_c symbol
+if(TARGET tim_r8)
+    target_link_libraries(tim_r8 PUBLIC tim)
+endif()
+
 install(
-  TARGETS ${LIB_TARGETS}
-  EXPORT FMSExports
+  TARGETS ${LIB_TARGETS} tim
+  EXPORT TIMExports
   RUNTIME DESTINATION bin
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib)
 
 ### Package config
 include(CMakePackageConfigHelpers)
-set(CONFIG_INSTALL_DESTINATION lib/cmake/fms)
+set(CONFIG_INSTALL_DESTINATION lib/cmake/tim)
 
-export(EXPORT FMSExports
-  NAMESPACE FMS::
-  FILE fms-targets.cmake)
-
-configure_package_config_file(
-  ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FMSConfig.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/fms-config.cmake
-  INSTALL_DESTINATION ${CONFIG_INSTALL_DESTINATION})
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/fms-config.cmake
-  DESTINATION ${CONFIG_INSTALL_DESTINATION})
+export(EXPORT TIMExports
+  NAMESPACE TIM::
+  FILE tim-targets.cmake)
 
 write_basic_package_version_file(
-  ${CMAKE_CURRENT_BINARY_DIR}/fms-config-version.cmake
+  ${CMAKE_CURRENT_BINARY_DIR}/tim-config-version.cmake
   VERSION ${PROJECT_VERSION}
   COMPATIBILITY AnyNewerVersion)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/fms-config-version.cmake
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/tim-config-version.cmake
   DESTINATION ${CONFIG_INSTALL_DESTINATION})
 
-install(EXPORT FMSExports
-  NAMESPACE FMS::
-  FILE fms-targets.cmake
+install(EXPORT TIMExports
+  NAMESPACE TIM::
+  FILE tim-targets.cmake
   DESTINATION ${CONFIG_INSTALL_DESTINATION})
