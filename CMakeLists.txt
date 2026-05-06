@@ -313,7 +313,8 @@ foreach(kind ${kinds})
   target_compile_definitions(${libTgt} PRIVATE "${fms_defs}")
   target_compile_definitions(${libTgt} PRIVATE "${${kind}_defs}")
 
-  target_link_libraries(${libTgt} PUBLIC NetCDF::NetCDF_Fortran
+  target_link_libraries(${libTgt} PUBLIC NetCDF::NetCDF_C
+                                         NetCDF::NetCDF_Fortran
                                          MPI::MPI_Fortran)
 
   if(OpenMP_Fortran_FOUND)
