@@ -1,0 +1,33 @@
+@PACKAGE_INIT@
+
+# TIMConfig.cmake
+#
+# Valid Find COMPONENTS:
+#  * R8 - 64-bit library
+#
+# Imported targets provided:
+#  * TIM::tim_r8 - real64 library target
+
+include("${CMAKE_CURRENT_LIST_DIR}/tim-targets.cmake")
+include(CMakeFindDependencyMacro)
+
+find_dependency(MPI COMPONENTS C Fortran)
+find_dependency(NetCDF COMPONENTS C Fortran)
+find_dependency(AMReX)
+
+if(@OPENMP@)
+  find_dependency(OpenMP COMPONENTS C Fortran)
+endif()
+
+set(TIMVersion "${PACKAGE_VERSION}")
+set_and_check(TIM_INSTALL_PREFIX "${PACKAGE_PREFIX_DIR}")
+
+set(TIM_R8_FOUND 0)
+if(@64BIT@)
+  set(TIM_R8_FOUND 1)
+  get_property(TIM_R8_LIBRARIES TARGET TIM::tim_r8 PROPERTY LOCATION)
+endif()
+
+check_required_components("TIM")
+
+message(STATUS "Found TIM: \"${TIM_INSTALL_PREFIX}\" (Version: \"${TIMVersion}\")")

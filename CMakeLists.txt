@@ -356,6 +356,13 @@ write_basic_package_version_file(
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/tim-config-version.cmake
   DESTINATION ${CONFIG_INSTALL_DESTINATION})
 
+configure_package_config_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/cmake/TIMConfig.cmake.in
+  ${CMAKE_CURRENT_BINARY_DIR}/TIMConfig.cmake
+  INSTALL_DESTINATION ${CONFIG_INSTALL_DESTINATION})
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/TIMConfig.cmake
+  DESTINATION ${CONFIG_INSTALL_DESTINATION})
+
 install(EXPORT TIMExports
   NAMESPACE TIM::
   FILE tim-targets.cmake
