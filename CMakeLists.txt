@@ -363,6 +363,11 @@ configure_package_config_file(
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/TIMConfig.cmake
   DESTINATION ${CONFIG_INSTALL_DESTINATION})
 
+# FindNetCDF.cmake must sit next to TIMConfig.cmake so the module path
+# adjustment in TIMConfig.cmake.in can find it (mirrors FMS's approach).
+configure_file(cmake/FindNetCDF.cmake ${CMAKE_CURRENT_BINARY_DIR}/FindNetCDF.cmake COPYONLY)
+install(FILES cmake/FindNetCDF.cmake DESTINATION ${CONFIG_INSTALL_DESTINATION})
+
 install(EXPORT TIMExports
   NAMESPACE TIM::
   FILE tim-targets.cmake
