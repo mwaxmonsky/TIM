@@ -275,8 +275,7 @@ foreach(kind ${kinds})
   target_compile_definitions(${libTgt}_f PRIVATE "${tim_defs}")
   target_compile_definitions(${libTgt}_f PRIVATE "${${kind}_defs}")
 
-  string(TOLOWER ${CMAKE_BUILD_TYPE} build_type)
-  if (NOT build_type STREQUAL debug)
+  if(${kind}_flags)
     set_target_properties(${libTgt}_f PROPERTIES COMPILE_FLAGS
                                                "${${kind}_flags}")
   endif()
