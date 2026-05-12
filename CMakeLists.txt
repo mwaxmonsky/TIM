@@ -32,9 +32,6 @@ project(TIM
 
 include(GNUInstallDirs)
 
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
 
 if(NOT CMAKE_BUILD_TYPE MATCHES "^(Debug|Release|RelWithDebInfo|MinSizeRel)$")
   message(STATUS "Setting build type to 'Release' as none was specified.")
@@ -54,7 +51,7 @@ if(NOT CMAKE_Fortran_COMPILER_ID MATCHES "^(Intel|GNU|IntelLLVM)$")
     WARNING "Compiler not officially supported: ${CMAKE_Fortran_COMPILER_ID}")
 endif()
 
-# Append directory that contains CMake Modules for building FMS
+# Append directory that contains CMake Modules for building TIM
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 # Build options
@@ -82,7 +79,7 @@ if(NOT kinds)
 endif()
 
 # Find dependencies
-find_package(MPI REQUIRED COMPONENTS C Fortran)
+find_package(MPI REQUIRED COMPONENTS C CXX Fortran)
 find_package(NetCDF REQUIRED COMPONENTS C Fortran)
 find_package(AMReX REQUIRED)
 
@@ -97,7 +94,7 @@ if (FPIC)
 endif ()
 
 # Collect FMS Fortran source files
-list(APPEND fms_fortran_src_files
+list(APPEND tim_fortran_src_files
   affinity/fms_affinity.F90
   astronomy/astronomy.F90
   axis_utils/axis_utils2.F90
@@ -156,7 +153,7 @@ list(APPEND fms_fortran_src_files
 )
 
 # Collect FMS C source files
-list(APPEND fms_c_src_files
+list(APPEND tim_c_src_files
   diag_manager/mppnccombine.c
   affinity/affinity.c
   mosaic2/create_xgrid.c
@@ -169,13 +166,13 @@ list(APPEND fms_c_src_files
 )
 
 # Collect FMS header files
-list(APPEND fms_header_files
+list(APPEND tim_header_files
   include/file_version.h
   include/fms_platform.h
 )
 
 # Standard FMS compiler definitions
-list(APPEND fms_defs
+list(APPEND tim_defs
   use_libMPI
   use_netCDF)
 
@@ -183,7 +180,7 @@ list(APPEND fms_defs
 include(CheckFunctionExists)
 check_function_exists(gettid HAVE_GETTID)
 if(HAVE_GETTID)
-  list(APPEND fms_defs HAVE_GETTID)
+  list(APPEND tim_defs HAVE_GETTID)
 endif()
 
 # Additional (optional) compiler definitions
@@ -191,29 +188,29 @@ if(NOT CONSTANTS)
     set(CONSTANTS GFDL)
 endif()
 if(CONSTANTS STREQUAL "GFS")
-  list(APPEND fms_defs GFS_CONSTANTS)
+  list(APPEND tim_defs GFS_CONSTANTS)
 elseif(CONSTANTS STREQUAL "GEOS")
-  list(APPEND fms_defs GEOS_CONSTANTS)
+  list(APPEND tim_defs GEOS_CONSTANTS)
 elseif(CONSTANTS STREQUAL "GFDL")
-  list(APPEND fms_defs GFDL_CONSTANTS)
+  list(APPEND tim_defs GFDL_CONSTANTS)
 else()
   message(FATAL_ERROR "CONSTANTS=${CONSTANTS} option not supported")
 endif()
 
 if(GFS_PHYS)
-  list(APPEND fms_defs GFS_PHYS)
+  list(APPEND tim_defs GFS_PHYS)
 endif()
 
 if(INTERNAL_FILE_NML)
-  list(APPEND fms_defs INTERNAL_FILE_NML)
+  list(APPEND tim_defs INTERNAL_FILE_NML)
 endif()
 
 if(ENABLE_QUAD_PRECISION)
-  list(APPEND fms_defs ENABLE_QUAD_PRECISION)
+  list(APPEND tim_defs ENABLE_QUAD_PRECISION)
 endif()
 
 if(LARGEFILE)
-  list(APPEND fms_defs use_LARGEFILE)
+  list(APPEND tim_defs use_LARGEFILE)
 endif()
 
 # Precision-based compiler definitions
@@ -223,7 +220,7 @@ endif()
 
 # Add platform specific compiler definitions
 if(APPLE)
-  list(APPEND fms_defs __APPLE__)
+  list(APPEND tim_defs __APPLE__)
 endif()
 
 # Obtain compiler-specific flags
@@ -233,11 +230,18 @@ include(fms_compiler_flags)
 add_library(tim STATIC
     tim/cpp/tim_coms_infra.cpp
     tim/cpp/tim_coms_infra_C_API.cpp
+    tim/cpp/tim_profile.cpp
 )
 target_include_directories(tim PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/tim/cpp>
-)
-target_link_libraries(tim PUBLIC AMReX::amrex_3d MPI::MPI_CXX)
+    $<INSTALL_INTERFACE:include/tim>)
+target_link_libraries(tim PUBLIC AMReX::amrex MPI::MPI_CXX)
+target_compile_features(tim PRIVATE cxx_std_20)
+set_target_properties(tim PROPERTIES CXX_EXTENSIONS OFF)
+install(FILES
+    tim/cpp/tim_coms_infra_C_API.h
+    tim/cpp/tim_profile.hpp
+    DESTINATION include/tim)
 
 foreach(kind ${kinds})
 
@@ -246,10 +250,10 @@ foreach(kind ${kinds})
   set(moduleDir "${CMAKE_CURRENT_BINARY_DIR}/${includeDir}")
 
   # C
-  add_library(${libTgt}_c OBJECT ${fms_c_src_files})
+  add_library(${libTgt}_c OBJECT ${tim_c_src_files})
 
   target_include_directories(${libTgt}_c PRIVATE include)
-  target_compile_definitions(${libTgt}_c PRIVATE "${fms_defs}")
+  target_compile_definitions(${libTgt}_c PRIVATE "${tim_defs}")
 
   target_link_libraries(${libTgt}_c PRIVATE NetCDF::NetCDF_C
                                             MPI::MPI_C)
@@ -259,7 +263,7 @@ foreach(kind ${kinds})
   endif()
 
   # Fortran
-  add_library(${libTgt}_f OBJECT ${fms_fortran_src_files})
+  add_library(${libTgt}_f OBJECT ${tim_fortran_src_files})
 
   target_include_directories(${libTgt}_f PRIVATE include
                                                  fms
@@ -268,7 +272,7 @@ foreach(kind ${kinds})
                                                  mpp/include
                                                  diag_manager/include
                                                  constants)
-  target_compile_definitions(${libTgt}_f PRIVATE "${fms_defs}")
+  target_compile_definitions(${libTgt}_f PRIVATE "${tim_defs}")
   target_compile_definitions(${libTgt}_f PRIVATE "${${kind}_defs}")
 
   string(TOLOWER ${CMAKE_BUILD_TYPE} build_type)
@@ -310,7 +314,7 @@ foreach(kind ${kinds})
     $<BUILD_INTERFACE:${moduleDir}>
     $<INSTALL_INTERFACE:${includeDir}>)
 
-  target_compile_definitions(${libTgt} PRIVATE "${fms_defs}")
+  target_compile_definitions(${libTgt} PRIVATE "${tim_defs}")
   target_compile_definitions(${libTgt} PRIVATE "${${kind}_defs}")
 
   target_link_libraries(${libTgt} PUBLIC NetCDF::NetCDF_C
@@ -321,18 +325,16 @@ foreach(kind ${kinds})
     target_link_libraries(${libTgt} PRIVATE OpenMP::OpenMP_Fortran)
   endif()
 
+  target_link_libraries(${libTgt} PUBLIC tim)
+
   add_library(TIM::${libTgt} ALIAS ${libTgt})
 
   list(APPEND LIB_TARGETS ${libTgt})
   install(DIRECTORY ${moduleDir}    DESTINATION ${CMAKE_INSTALL_PREFIX})
-  install(FILES ${fms_header_files} DESTINATION ${CMAKE_INSTALL_PREFIX}/${includeDir})
+  install(FILES ${tim_header_files} DESTINATION ${CMAKE_INSTALL_PREFIX}/${includeDir})
 
 endforeach()
 
-# Link TIM C++ layer into tim_r8 so consumers get the tim_chksum_c symbol
-if(TARGET tim_r8)
-    target_link_libraries(tim_r8 PUBLIC tim)
-endif()
 
 install(
   TARGETS ${LIB_TARGETS} tim
@@ -347,25 +349,25 @@ set(CONFIG_INSTALL_DESTINATION lib/cmake/tim)
 
 export(EXPORT TIMExports
   NAMESPACE TIM::
-  FILE tim-targets.cmake)
+  FILE ${CMAKE_CURRENT_BINARY_DIR}/${CONFIG_INSTALL_DESTINATION}/tim-targets.cmake)
 
 write_basic_package_version_file(
-  ${CMAKE_CURRENT_BINARY_DIR}/tim-config-version.cmake
+  ${CMAKE_CURRENT_BINARY_DIR}/${CONFIG_INSTALL_DESTINATION}/tim-config-version.cmake
   VERSION ${PROJECT_VERSION}
   COMPATIBILITY AnyNewerVersion)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/tim-config-version.cmake
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${CONFIG_INSTALL_DESTINATION}/tim-config-version.cmake
   DESTINATION ${CONFIG_INSTALL_DESTINATION})
 
 configure_package_config_file(
   ${CMAKE_CURRENT_SOURCE_DIR}/cmake/TIMConfig.cmake.in
-  ${CMAKE_CURRENT_BINARY_DIR}/TIMConfig.cmake
+  ${CMAKE_CURRENT_BINARY_DIR}/${CONFIG_INSTALL_DESTINATION}/TIMConfig.cmake
   INSTALL_DESTINATION ${CONFIG_INSTALL_DESTINATION})
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/TIMConfig.cmake
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${CONFIG_INSTALL_DESTINATION}/TIMConfig.cmake
   DESTINATION ${CONFIG_INSTALL_DESTINATION})
 
 # FindNetCDF.cmake must sit next to TIMConfig.cmake so the module path
-# adjustment in TIMConfig.cmake.in can find it (mirrors FMS's approach).
-configure_file(cmake/FindNetCDF.cmake ${CMAKE_CURRENT_BINARY_DIR}/FindNetCDF.cmake COPYONLY)
+# adjustment in TIMConfig.cmake.in can find it.
+configure_file(cmake/FindNetCDF.cmake ${CMAKE_CURRENT_BINARY_DIR}/${CONFIG_INSTALL_DESTINATION}/FindNetCDF.cmake COPYONLY)
 install(FILES cmake/FindNetCDF.cmake DESTINATION ${CONFIG_INSTALL_DESTINATION})
 
 install(EXPORT TIMExports
