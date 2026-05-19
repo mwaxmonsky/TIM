@@ -316,9 +316,18 @@ foreach(kind ${kinds})
   target_compile_definitions(${libTgt} PRIVATE "${tim_defs}")
   target_compile_definitions(${libTgt} PRIVATE "${${kind}_defs}")
 
+  # TIM's C++ object files (and the AMReX static archive it depends on)
+  # reference the C++ standard library (e.g. __cxa_call_terminate). When
+  # the consuming executable is driven by gfortran -- or by a g++ install
+  # whose CMAKE_CXX_IMPLICIT_LINK_LIBRARIES is empty (some spack-built
+  # compilers) -- libstdc++ never reaches the link line. Declare the C++
+  # runtime explicitly so the dependency is honest.
   target_link_libraries(${libTgt} PUBLIC NetCDF::NetCDF_C
                                          NetCDF::NetCDF_Fortran
-                                         MPI::MPI_Fortran)
+                                         MPI::MPI_Fortran
+                                         $<$<CXX_COMPILER_ID:GNU>:stdc++>
+                                         $<$<CXX_COMPILER_ID:Clang,AppleClang>:c++>
+                                         $<$<CXX_COMPILER_ID:IntelLLVM>:c++>)
 
   if(OpenMP_Fortran_FOUND)
     target_link_libraries(${libTgt} PRIVATE OpenMP::OpenMP_Fortran)
