@@ -235,7 +235,16 @@ add_library(tim STATIC
 target_include_directories(tim PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/tim/cpp>
     $<INSTALL_INTERFACE:include/tim>)
-target_link_libraries(tim PUBLIC AMReX::amrex MPI::MPI_CXX)
+# tim's C++ object files and AMReX::amrex reference the C++ standard
+# library (e.g. __cxa_call_terminate). Position the runtime *after*
+# AMReX::amrex so it lands after libamrex_3d.a in the consumer's link
+# line -- otherwise GNU ld with --as-needed (default on some Linux
+# distros, incl. NCAR Derecho) drops libstdc++ before amrex's undefined
+# refs are seen.
+target_link_libraries(tim PUBLIC AMReX::amrex MPI::MPI_CXX
+                                 $<$<CXX_COMPILER_ID:GNU>:stdc++>
+                                 $<$<CXX_COMPILER_ID:Clang,AppleClang>:c++>
+                                 $<$<CXX_COMPILER_ID:IntelLLVM>:c++>)
 target_compile_features(tim PRIVATE cxx_std_20)
 set_target_properties(tim PROPERTIES CXX_EXTENSIONS OFF)
 install(FILES
@@ -316,18 +325,9 @@ foreach(kind ${kinds})
   target_compile_definitions(${libTgt} PRIVATE "${tim_defs}")
   target_compile_definitions(${libTgt} PRIVATE "${${kind}_defs}")
 
-  # TIM's C++ object files (and the AMReX static archive it depends on)
-  # reference the C++ standard library (e.g. __cxa_call_terminate). When
-  # the consuming executable is driven by gfortran -- or by a g++ install
-  # whose CMAKE_CXX_IMPLICIT_LINK_LIBRARIES is empty (some spack-built
-  # compilers) -- libstdc++ never reaches the link line. Declare the C++
-  # runtime explicitly so the dependency is honest.
   target_link_libraries(${libTgt} PUBLIC NetCDF::NetCDF_C
                                          NetCDF::NetCDF_Fortran
-                                         MPI::MPI_Fortran
-                                         $<$<CXX_COMPILER_ID:GNU>:stdc++>
-                                         $<$<CXX_COMPILER_ID:Clang,AppleClang>:c++>
-                                         $<$<CXX_COMPILER_ID:IntelLLVM>:c++>)
+                                         MPI::MPI_Fortran)
 
   if(OpenMP_Fortran_FOUND)
     target_link_libraries(${libTgt} PRIVATE OpenMP::OpenMP_Fortran)
