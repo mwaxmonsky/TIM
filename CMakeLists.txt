@@ -242,10 +242,11 @@ target_include_directories(tim PUBLIC
 # distros, incl. NCAR Derecho) drops libstdc++ before amrex's undefined
 # refs are seen.
 target_link_libraries(tim PUBLIC AMReX::amrex MPI::MPI_CXX
-                                 $<$<CXX_COMPILER_ID:GNU>:stdc++>
-                                 $<$<CXX_COMPILER_ID:Clang,AppleClang>:c++>
-                                 $<$<CXX_COMPILER_ID:IntelLLVM>:c++>)
-target_compile_features(tim PRIVATE cxx_std_20)
+                                 $<$<CXX_COMPILER_ID:GNU,IntelLLVM>:stdc++>
+                                 $<$<CXX_COMPILER_ID:Clang,AppleClang>:c++>)
+# PUBLIC so consumers including tim_profile.hpp / tim_coms_infra_C_API.h
+# (installed below) get the C++20 requirement propagated.
+target_compile_features(tim PUBLIC cxx_std_20)
 set_target_properties(tim PROPERTIES CXX_EXTENSIONS OFF)
 install(FILES
     tim/cpp/tim_coms_infra_C_API.h
@@ -359,11 +360,13 @@ export(EXPORT TIMExports
   NAMESPACE TIM::
   FILE ${CMAKE_CURRENT_BINARY_DIR}/${CONFIG_INSTALL_DESTINATION}/tim-targets.cmake)
 
+# Versioned find_package(TIM <version>) derives the filename from the
+# config stem; with TIMConfig.cmake it must be TIMConfigVersion.cmake.
 write_basic_package_version_file(
-  ${CMAKE_CURRENT_BINARY_DIR}/${CONFIG_INSTALL_DESTINATION}/tim-config-version.cmake
+  ${CMAKE_CURRENT_BINARY_DIR}/${CONFIG_INSTALL_DESTINATION}/TIMConfigVersion.cmake
   VERSION ${PROJECT_VERSION}
   COMPATIBILITY AnyNewerVersion)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${CONFIG_INSTALL_DESTINATION}/tim-config-version.cmake
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${CONFIG_INSTALL_DESTINATION}/TIMConfigVersion.cmake
   DESTINATION ${CONFIG_INSTALL_DESTINATION})
 
 configure_package_config_file(

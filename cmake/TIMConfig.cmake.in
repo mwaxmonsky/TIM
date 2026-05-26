@@ -10,18 +10,28 @@
 #  * TIM::tim_r4 - real32 library target (if built with 32BIT=ON)
 #  * TIM::tim_r8 - real64 library target (if built with 64BIT=ON)
 
-include("${CMAKE_CURRENT_LIST_DIR}/tim-targets.cmake")
 include(CMakeFindDependencyMacro)
 
-find_dependency(MPI COMPONENTS C CXX Fortran)
+# Resolve transitive deps BEFORE include(tim-targets.cmake): the exported
+# targets reference NetCDF::, MPI::, AMReX::amrex by name, and cmake errors
+# out at include() if those imported targets are not yet defined.
+find_dependency(MPI COMPONENTS C Fortran)
+# Save and restore CMAKE_MODULE_PATH so a pre-existing matching entry is
+# preserved (REMOVE_ITEM would drop it).
+set(_tim_saved_module_path "${CMAKE_MODULE_PATH}")
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR})
 find_dependency(NetCDF COMPONENTS C Fortran)
-list(REMOVE_ITEM CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR})
-find_dependency(AMReX)
+set(CMAKE_MODULE_PATH "${_tim_saved_module_path}")
+unset(_tim_saved_module_path)
+# TIM links against AMReX's Fortran interface; consumers need the same
+# component to satisfy transitive symbols at link time.
+find_dependency(AMReX COMPONENTS FORTRAN)
 
 if(@OPENMP@)
   find_dependency(OpenMP COMPONENTS C Fortran)
 endif()
+
+include("${CMAKE_CURRENT_LIST_DIR}/tim-targets.cmake")
 
 set(TIMVersion "${PACKAGE_VERSION}")
 set_and_check(TIM_INSTALL_PREFIX "${PACKAGE_PREFIX_DIR}")
@@ -32,9 +42,15 @@ foreach(_comp ${_possible_tim_components})
   set(_name_${_comp} ${_comp})
 endforeach()
 
-# R8 is the default component (MOM6 always uses double precision).
+# Default the requested component to the one(s) actually built — prevents
+# `find_package(TIM)` from succeeding with no usable target when the
+# installed library doesn't include R8.
 if(NOT TIM_FIND_COMPONENTS)
-  list(APPEND _search_tim_components "R8")
+  if(@64BIT@)
+    list(APPEND _search_tim_components "R8")
+  elseif(@32BIT@)
+    list(APPEND _search_tim_components "R4")
+  endif()
 endif()
 foreach(_comp ${TIM_FIND_COMPONENTS})
   list(APPEND _search_tim_components ${_comp})
