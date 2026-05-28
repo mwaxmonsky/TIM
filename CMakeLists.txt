@@ -56,8 +56,8 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 # Build options
 option(OPENMP "Build TIM with OpenMP support"        OFF)
-option(32BIT  "Build 32-bit (r4) TIM library"         ON)
-option(64BIT  "Build 64-bit (r8) TIM library"        OFF)
+option(32BIT  "Build 32-bit (r4) TIM library"        OFF)
+option(64BIT  "Build 64-bit (r8) TIM library"         ON)
 option(FPIC   "Build with position independent code" OFF)
 
 # Options for compiler definitions
