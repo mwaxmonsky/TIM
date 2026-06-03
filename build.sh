@@ -4,8 +4,9 @@
 # Builds TIM using CMake. Assumes dependencies (MPI, NetCDF, AMReX) are
 # already on CMAKE_PREFIX_PATH (e.g. via an active Spack environment).
 #
-# Required environment variables:
-#   TIM_ROOT    Path to the TIM repository clone
+# Optional environment variables:
+#   TIM_ROOT    Path to the TIM repository clone (defaults to this script's
+#               directory, so it normally need not be set)
 #
 # Options:
 #   --debug         Full clean rebuild (deletes build dir and rebuilds from scratch)
@@ -15,8 +16,11 @@
 
 set -eo pipefail
 
-if [[ -z "${TIM_ROOT:-}" ]]; then
-    echo "Error: TIM_ROOT is not set." >&2
+TIM_ROOT="${TIM_ROOT:-$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
+
+# Sanity-check the deduced/overridden root really is a TIM tree
+if [[ ! -f "$TIM_ROOT/CMakeLists.txt" ]]; then
+    echo "Error: TIM_ROOT ('$TIM_ROOT') doesn't look like a TIM checkout." >&2
     exit 1
 fi
 
