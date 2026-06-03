@@ -339,8 +339,8 @@ foreach(kind ${kinds})
   add_library(TIM::${libTgt} ALIAS ${libTgt})
 
   list(APPEND LIB_TARGETS ${libTgt})
-  install(DIRECTORY ${moduleDir}    DESTINATION ${CMAKE_INSTALL_PREFIX})
-  install(FILES ${tim_header_files} DESTINATION ${CMAKE_INSTALL_PREFIX}/${includeDir})
+  install(DIRECTORY ${moduleDir}    DESTINATION .)
+  install(FILES ${tim_header_files} DESTINATION ${includeDir})
 
 endforeach()
 
