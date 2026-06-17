@@ -66,6 +66,7 @@ public:
     double           real64    (const std::string& name) const;
     bool             logical   (const std::string& name) const;
     int              integer   (const std::string& name) const;
+
 private:
     struct Entry {
         std::string type;
