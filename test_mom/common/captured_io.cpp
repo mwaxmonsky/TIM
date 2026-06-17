@@ -190,4 +190,10 @@ bool CapturedFile::logical(const std::string& name) const {
     return read_be_i32(bin_, off) != 0;
 }
 
+int CapturedFile::integer(const std::string& name) const {
+    const auto& e = lookup(name, "integer");
+    std::size_t off = e.offset - 1;
+    return read_be_i32(bin_, off);
+}
+
 } // namespace test_mom
