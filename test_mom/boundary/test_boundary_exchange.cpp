@@ -1,5 +1,4 @@
 #include <format>
-#include <iostream>
 
 #include <gtest/gtest.h>
 
@@ -13,7 +12,6 @@
 #include "data_dir.hpp"
 
 using test_mom::expect_arrays_equal;
-using test_mom::to_host_fab;
 
 TEST(BoundaryExchange, BoundaryMatchesAfterOneTimeStep) {
     int myRank = amrex::ParallelDescriptor::MyProc();
@@ -27,35 +25,36 @@ TEST(BoundaryExchange, BoundaryMatchesAfterOneTimeStep) {
     int  niglobal     = captured.integer("G%Domain%niglobal");
     int  njglobal     = captured.integer("G%Domain%njglobal");
 
-    amrex::BoxList boxList;
+    amrex::BoxList     boxList;
     amrex::Vector<int> processBoxList;
-    int iLocalGridSize = bathyTBefore.box().length(0) - (2*nihalo);
-    int jLocalGridSize = bathyTBefore.box().length(1) - (2*njhalo);
+    int iLocalDataGridSize = bathyTBefore.box().length(0) - (2*nihalo);
+    int jLocalDataGridSize = bathyTBefore.box().length(1) - (2*njhalo);
 
     // Assumes equally sized grids
     for(int i = 0; i < amrex::ParallelDescriptor::NProcs(); i++)
     {
         test_mom::CapturedFile rankc(test_mom::data_dir /
                                     ("MOM_fixed_initialization_" + std::format("{:04}", i)));
+
         int iGridStartLoc = rankc.integer("G%bathyT_brefore%isd_global") + nihalo;
         int jGridStartLoc = rankc.integer("G%bathyT_brefore%jsd_global") + njhalo;
         amrex::IntVect lo(iGridStartLoc, jGridStartLoc, 0);
-        amrex::IntVect hi(lo[0] + iLocalGridSize - 1, lo[1] + jLocalGridSize - 1, 0);
-        amrex::Box b(lo, hi);
-        boxList.push_back(b);
+        amrex::IntVect hi(lo[0] + iLocalDataGridSize - 1, lo[1] + jLocalDataGridSize - 1, 0);
+
+        boxList.emplace_back(amrex::Box(lo, hi));
         processBoxList.push_back(i);
     }
 
     // Setup multifab
-    amrex::BoxArray boxes(boxList);
+    amrex::BoxArray            boxes(boxList);
     amrex::DistributionMapping dm(processBoxList);
-    amrex::IntVect fourRowTwo2DGhostCells{nihalo, njhalo, 0};
-    amrex::MultiFab mf(boxes, dm, /*ncomp=*/1, fourRowTwo2DGhostCells);
+    amrex::IntVect             fourRowTwo2DGhostCells{nihalo, njhalo, 0};
+    amrex::MultiFab            mf(boxes, dm, /*ncomp=*/1, fourRowTwo2DGhostCells);
 
-    // Setup box
+    // Setup geometry
     amrex::Box globalComputationalDomain(amrex::IntVect(           0,            0, 0),
                                          amrex::IntVect(niglobal - 1, njglobal - 1, 0));
-    amrex::RealBox realBox({0.0, 0.0, 0.0}, {1.0, 1.0, 1.0});
+    amrex::RealBox  realBox({0.0, 0.0, 0.0}, {1.0, 1.0, 1.0});
     amrex::Geometry geom(globalComputationalDomain, &realBox);
 
     // Verify that the loops iterate only the expected number of times
