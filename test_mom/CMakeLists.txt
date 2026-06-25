@@ -27,6 +27,23 @@ if(AMReX_GPU_BACKEND STREQUAL "CUDA")
     enable_language(CUDA)
 endif()
 
+# --- MPI based tests ------------------------------------------------------
+option(MPI_UNIT_TESTS "Build and run MPI based unit tests." OFF)
+
+# --- GTest ----------------------------------------------------------------
+option(TEST_MOM_FETCH_GTEST
+       "Download GoogleTest via FetchContent if find_package fails" ON)
+
+# --- Captured-data directory (used by --data-dir CLI flag) ---------------
+set(TEST_MOM_DATA_DIR ""
+    CACHE PATH "Directory containing the captured Fortran I/O .bin/.meta files")
+if(NOT TEST_MOM_DATA_DIR)
+    message(FATAL_ERROR
+        "TEST_MOM_DATA_DIR is not set. Pass\n"
+        "  -DTEST_MOM_DATA_DIR=/path/to/captured/fixtures\n"
+        "on the cmake configure line.")
+endif()
+
 # --- AMReX ----------------------------------------------------------------
 # Prefer an installed AMReX if available; otherwise build the in-tree source.
 set(AMREX_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../../amrex"
@@ -44,10 +61,6 @@ if(NOT AMReX_FOUND)
     add_subdirectory(${AMREX_SOURCE_DIR}
                      ${CMAKE_CURRENT_BINARY_DIR}/_amrex)
 endif()
-
-# --- GTest ----------------------------------------------------------------
-option(TEST_MOM_FETCH_GTEST
-       "Download GoogleTest via FetchContent if find_package fails" ON)
 
 find_package(GTest QUIET)
 if(NOT GTest_FOUND)
@@ -69,16 +82,6 @@ endif()
 
 enable_testing()
 include(GoogleTest)
-
-# --- Captured-data directory (used by --data-dir CLI flag) ---------------
-set(TEST_MOM_DATA_DIR ""
-    CACHE PATH "Directory containing the captured Fortran I/O .bin/.meta files")
-if(NOT TEST_MOM_DATA_DIR)
-    message(FATAL_ERROR
-        "TEST_MOM_DATA_DIR is not set. Pass\n"
-        "  -DTEST_MOM_DATA_DIR=/path/to/captured/fixtures\n"
-        "on the cmake configure line.")
-endif()
 
 # --- MOM C++ kernels library (target: mom_continuity) ---------------------
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../mom/cpp
@@ -104,5 +107,8 @@ add_subdirectory(common)
 add_library(data_driven_shared_main OBJECT test_mom_main.cpp)
 target_link_libraries(data_driven_shared_main PUBLIC common)
 
-add_subdirectory(mom_continuity_ppm)
-add_subdirectory(boundary)
+if(MPI_UNIT_TESTS)
+  add_subdirectory(boundary)
+else()
+  add_subdirectory(mom_continuity_ppm)
+endif()
