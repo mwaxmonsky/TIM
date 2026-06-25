@@ -1,0 +1,1 @@
+add_mpi_test(test_boundary_exchange test_boundary_exchange.cpp double_gyre_init_pass_var)

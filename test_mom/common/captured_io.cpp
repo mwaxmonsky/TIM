@@ -154,14 +154,21 @@ amrex::FArrayBox CapturedFile::fab_host(const std::string& name) const {
             std::to_string(nelem) + ", expected " + std::to_string(expected) +
             ")");
     }
-    amrex::Box sbx(amrex::IntVect(0, 0, 0),
-                   amrex::IntVect(shape[0] - 1, shape[1] - 1, shape[2] - 1));
+    amrex::IntVect start(0, 0, 0);
+    if(entries_.contains(name + "%isd_global") && entries_.contains(name + "%jsd_global"))
+    {
+        int isd_global = this->integer(name + "%isd_global");
+        int jsd_global = this->integer(name + "%jsd_global");
+        start = amrex::IntVect(isd_global, jsd_global, 0);
+    }
+    amrex::IntVect end(start[0] + shape[0] - 1, start[1] + shape[1] -1, shape[2] - 1);
+    amrex::Box sbx(start, end);
     amrex::FArrayBox fab(sbx, 1, amrex::The_Pinned_Arena());
     auto arr = fab.array();
     // Fortran column-major in the file: i fastest, then j, then k.
-    for (int k = 0; k < shape[2]; ++k)
-        for (int j = 0; j < shape[1]; ++j)
-            for (int i = 0; i < shape[0]; ++i)
+    for (int k = start[2]; k < end[2]; ++k)
+        for (int j = start[1]; j < end[1]; ++j)
+            for (int i = start[0]; i < end[0]; ++i)
                 arr(i, j, k) = read_be_f64(bin_, off);
     return fab;
 }

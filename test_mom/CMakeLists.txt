@@ -17,8 +17,9 @@
 cmake_minimum_required(VERSION 3.20)
 
 project(test_mom CXX)
+enable_language(C Fortran)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -83,14 +84,6 @@ endif()
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../mom/cpp
                  ${CMAKE_CURRENT_BINARY_DIR}/mom_cpp)
 
-# --- mom_continuity_ppm test ----------------------------------------------
-add_executable(test_mom_continuity_ppm
-    test_mom_main.cpp
-    common/captured_io.cpp
-    common/amrex_assertions.cpp
-    mom_continuity_ppm/test_mom_continuity_ppm.cpp
-)
-
 # Every source in this target includes AMReX headers. With the CUDA backend
 # those headers use __host__/__device__ qualifiers and CUDA kernel-launch
 # syntax, so nvcc must compile them. CMake won't infer this from .cpp, so we
@@ -101,23 +94,15 @@ if(AMReX_GPU_BACKEND STREQUAL "CUDA")
         common/captured_io.cpp
         common/amrex_assertions.cpp
         mom_continuity_ppm/test_mom_continuity_ppm.cpp
+        boundary/test_boundary_exchange.cpp
         PROPERTIES LANGUAGE CUDA)
 endif()
 
-target_include_directories(test_mom_continuity_ppm
-    PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/common
-)
-target_link_libraries(test_mom_continuity_ppm
-    PRIVATE
-        mom_continuity
-        GTest::gtest
-)
-gtest_discover_tests(test_mom_continuity_ppm
-    EXTRA_ARGS --data-dir=${TEST_MOM_DATA_DIR}
-    # Discover at test-run time rather than build time. With the CUDA backend
-    # the binary calls amrex::Initialize() which aborts on hosts without a GPU
-    # (e.g. Derecho login nodes), so running it at POST_BUILD would break the
-    # build.
-    DISCOVERY_MODE PRE_TEST
-)
+include(cmake/add_mpi_test.cmake)
+add_subdirectory(common)
+
+add_library(data_driven_shared_main OBJECT test_mom_main.cpp)
+target_link_libraries(data_driven_shared_main PUBLIC common)
+
+add_subdirectory(mom_continuity_ppm)
+add_subdirectory(boundary)
