@@ -41,7 +41,7 @@ TEST(BoundaryExchange, BoundaryMatchesAfterOneTimeStep) {
         amrex::IntVect lo(iGridStartLoc, jGridStartLoc, 0);
         amrex::IntVect hi(lo[0] + iLocalDataGridSize - 1, lo[1] + jLocalDataGridSize - 1, 0);
 
-        boxList.emplace_back(amrex::Box(lo, hi));
+        boxList.push_back(amrex::Box(lo, hi));
         processBoxList.push_back(i);
     }
 
