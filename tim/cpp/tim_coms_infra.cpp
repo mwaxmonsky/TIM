@@ -26,7 +26,9 @@ amrex::Long checksum(amrex::Box const& bx, amrex::Array4<amrex::Real> const& arr
     reducer.eval(bx,
         [=] AMREX_GPU_DEVICE (int i, int j, int k) -> Result_t
         {
-            return { * ( amrex::Long * ) &arr(i, j, k) };
+            amrex::Long bits;
+            std::memcpy(&bits, &arr(i,j,k), sizeof(bits));
+            return bits;
         });
     amrex::Long checksum = amrex::get<0>(reducer.getResult());
     amrex::ParallelDescriptor::ReduceLongSum(checksum);
@@ -38,13 +40,15 @@ amrex::Long checksum(amrex::Box const& bx, amrex::Array4<amrex::Real> const& arr
     amrex::Reducer<amrex::ReduceOpSum, amrex::Long> reducer;
     using Result_t = typename decltype(reducer)::Result_t;
 
-    amrex::Long mask_bytes = * ( amrex::Long * ) &mask;
+    amrex::Long mask_bytes;
+    std::memcpy(&mask_bytes, &mask, sizeof(mask_bytes));
 
     reducer.eval(bx,
         [=] AMREX_GPU_DEVICE (int i, int j, int k) -> Result_t
         {
-            amrex::Long field_checksum = * ( amrex::Long * ) &arr(i, j, k);
-            return { (field_checksum == mask_bytes) ? 0 : field_checksum };
+            amrex::Long bits;
+            std::memcpy(&bits, &arr(i,j,k), sizeof(bits));
+            return { (bits == mask_bytes) ? 0 : field_checksum };
         });
     amrex::Long checksum = amrex::get<0>(reducer.getResult());
     amrex::ParallelDescriptor::ReduceLongSum(checksum);
