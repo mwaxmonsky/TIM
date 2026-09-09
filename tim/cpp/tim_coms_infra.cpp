@@ -16,11 +16,6 @@ namespace TIM {
 amrex::Long checksum(amrex::Box const& bx, amrex::Array4<amrex::Real> const& arr,
                      std::optional<amrex::Real> mask)
 {
-    // Cast needed due to lack of C++20 support in icpc needed to do:
-    //   auto checksum = std::bit_cast<int64_t>(var);
-    // See https://en.wikipedia.org/wiki/Fast_inverse_square_root#Overview_of_the_code
-    // for logic behind casting.
-    // Also need C++20 to use std::view::filter for mask.
     amrex::Reducer<amrex::ReduceOpSum, amrex::Long> reducer;
     using Result_t = typename decltype(reducer)::Result_t;
 
