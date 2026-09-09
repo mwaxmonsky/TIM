@@ -14,7 +14,7 @@ int64_t tim_chksum_c(double* field, size_t field_size, double* mask_val) {
     amrex::Array4<amrex::Real> arr(field, begin, end, 1);
     amrex::Box bx(amrex::IntVect{0,0,0}, amrex::IntVect{field_size_int-1, 0, 0});
 
-    if(mask_val)
+    if (mask_val)
         return TIM::checksum(bx, arr, *mask_val);
     else
         return TIM::checksum(bx, arr);
