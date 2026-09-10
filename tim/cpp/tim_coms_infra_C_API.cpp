@@ -7,7 +7,7 @@
 #include "tim_coms_infra.hpp"
 #include "turbotmp_helper.hpp"
 
-int64_t tim_chksum_c(const Box_C* bx_HOST, const RealArray_C* field_HOST, double* mask_val) {
+int64_t tim_chksum_c(const Box_C* bx_HOST, const RealArray_C* field_HOST, double* mask_val, int* pelist, size_t pelist_size) {
     /// Define Active domain (checksum only over real cells)
     amrex::Box bx(amrex::IntVect(bx_HOST->idxS[0]-1, bx_HOST->idxS[1]-1, bx_HOST->idxS[2]-1),
                   amrex::IntVect(bx_HOST->idxE[0]-1, bx_HOST->idxE[1]-1, bx_HOST->idxE[2]-1));
