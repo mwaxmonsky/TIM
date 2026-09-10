@@ -13,12 +13,12 @@ extern "C" {
 #endif
 
 /// @brief C entry point for TIM::checksum (FMS mpp_chksum replacement).
-/// @param bx_HOST    Box over which to compute the checksum (host, Fortran order).
 /// @param field_HOST Per-rank field data (host, Fortran order).
 /// @param mask_val   Value marking masked elements (compared bitwise);
 ///                   pass NULL for an unmasked checksum.
+/// @param global_chksum Flag indicating to perform all rank reduction after local cheksum
 /// @return The global checksum (identical on every rank).
-int64_t tim_chksum_c(const Box_C* bx_HOST, const RealArray_C* field_HOST, double* mask_val, bool global_chksum);
+int64_t tim_chksum_c(const RealArray_C* field_HOST, double* mask_val, bool global_chksum);
 
 #ifdef __cplusplus
 }

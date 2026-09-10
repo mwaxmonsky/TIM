@@ -7,11 +7,7 @@
 #include "tim_coms_infra.hpp"
 #include "turbotmp_helper.hpp"
 
-int64_t tim_chksum_c(const Box_C* bx_HOST, const RealArray_C* field_HOST, double* mask_val, bool global_chksum) {
-    /// Define Active domain (checksum only over real cells)
-    amrex::Box bx(amrex::IntVect(bx_HOST->idxS[0]-1, bx_HOST->idxS[1]-1, bx_HOST->idxS[2]-1),
-                  amrex::IntVect(bx_HOST->idxE[0]-1, bx_HOST->idxE[1]-1, bx_HOST->idxE[2]-1));
-
+int64_t tim_chksum_c(const RealArray_C* field_HOST, double* mask_val, bool global_chksum) {
     /// Create A4 container for the Fortran array
     auto field_DEV = turbotmp::make_array4(field_HOST->shape[0], field_HOST->shape[1], field_HOST->shape[2], 1);
 
