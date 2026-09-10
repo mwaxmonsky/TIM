@@ -29,8 +29,8 @@ namespace TIM {
     ///                  ghost cells it was allocated with.
     /// @param mask      If set, value marking masked elements (compared
     ///                  bitwise) to exclude from the checksum.
-    /// @return The global checksum (identical on every rank).
     /// @param global_chksum Flag indicating to perform all rank checksum.
+    /// @return The global checksum (identical on every rank).
     amrex::Long checksum(amrex::MultiFab const& mf,
                          std::optional<amrex::Real> mask = std::nullopt,
                          bool global_chksum = false);
