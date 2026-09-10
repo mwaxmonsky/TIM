@@ -7,21 +7,26 @@
 #include "tim_coms_infra.hpp"
 #include "turbotmp_helper.hpp"
 
-int64_t tim_chksum_c(const RealArray_C* field_HOST, double* mask_val, bool global_chksum) {
-    /// Create A4 container for the Fortran array
-    auto field_DEV = turbotmp::make_array4(field_HOST->shape[0], field_HOST->shape[1], field_HOST->shape[2], 1);
+int64_t tim_chksum_c(const RealArray_C* field_HOST, double* mask_val, bool global_chksum)
+{
+    amrex::Box bx({0,0,0},
+                  {field_HOST->shape[0], field_HOST->shape[1], field_HOST->shape[2]});
 
-    /// Copy from Fortran array to A4 container
-    turbotmp::copy_FortranHost_to_array4(field_HOST->data, field_DEV);
+    size_t num_points = bx.numPts();
+
+    double* device_array = static_cast<double*>(TheArena()->alloc(num_points * sizeof(double)));
+    Gpu::copy(Gpu::hostToDevice, field_HOST->data, field_HOST.data+num_points, device_array);
+
+    amrex::BaseFab<double> non_owning_fab(bx, num_points, device_array);
+    auto array_1d = non_owning_fab.array();
 
     ///-------------------------------------------------
     /// Execute checksum
     ///-------------------------------------------------
-    int64_t chksum = mask_val ? TIM::checksum(bx, field_DEV.arr, *mask_val)
-                              : TIM::checksum(bx, field_DEV.arr);
+    int64_t chksum = mask_val ? TIM::checksum(bx, array_1d, *mask_val)
+                              : TIM::checksum(bx, array_1d);
 
-    /// Free a4 container
-    turbotmp::free_array4(field_DEV);
+    TheArena()->free(device_array);
 
     return chksum;
 }
