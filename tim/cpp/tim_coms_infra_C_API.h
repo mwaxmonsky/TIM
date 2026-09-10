@@ -18,7 +18,7 @@ extern "C" {
 /// @param mask_val   Value marking masked elements (compared bitwise);
 ///                   pass NULL for an unmasked checksum.
 /// @return The global checksum (identical on every rank).
-int64_t tim_chksum_c(const Box_C* bx_HOST, const RealArray_C* field_HOST, double* mask_val, int* pelist, size_t pelist_size);
+int64_t tim_chksum_c(const Box_C* bx_HOST, const RealArray_C* field_HOST, double* mask_val, bool global_chksum);
 
 #ifdef __cplusplus
 }
