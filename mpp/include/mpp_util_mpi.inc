@@ -40,6 +40,7 @@ subroutine mpp_error_basic( errortype, errormsg )
   integer,                    intent(in) :: errortype
   character(len=*), intent(in), optional :: errormsg
   character(len=512)                     :: text
+  character(len=512)                     :: buff
   integer                                :: errunit
 
   if( .NOT.module_is_initialized )call ABORT()
@@ -55,7 +56,10 @@ subroutine mpp_error_basic( errortype, errormsg )
      text = 'WARNING: non-existent errortype (must be NOTE|WARNING|FATAL)'
   end select
 
-  if( npes.GT.1 )write( text,'(a,i6)' )trim(text)//' from PE', pe   !this is the mpp part
+  if( npes.GT.1 ) then
+    buff = trim(text)//' from PE'
+    write( text,'(a,i6)' ) trim(buff), pe   !this is the mpp part
+  end if
   if( PRESENT(errormsg) )text = trim(text)//': '//trim(errormsg)
 !$OMP CRITICAL (MPP_ERROR_CRITICAL)
   select case( errortype )
